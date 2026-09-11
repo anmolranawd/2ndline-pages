@@ -4,69 +4,66 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="color-scheme" content="light dark">
-<title>Share your location — 2nd Line AI</title>
+<meta name="color-scheme" content="light">
+<title>Track Location — 2nd Line AI</title>
 <style>
+  /* Figma "Track Location on web" (Phone Number Tracking Flow): the map
+     across the top of the page, the two store badges under it, the support
+     line last. The browser's own location prompt is the consent — the file
+     draws Safari's dialog over this page and nothing of ours. */
   *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
   body{font:16px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,
-    Helvetica,Arial,sans-serif;color:#101828;background:#F9FAFB;
-    min-height:100vh;display:flex;align-items:center;justify-content:center;
-    padding:20px}
-  .card{background:#fff;border:1px solid #D0D5DD;border-radius:20px;
-    padding:28px 22px;width:100%;max-width:420px;text-align:center}
-  .badge{width:64px;height:64px;border-radius:50%;margin:0 auto 18px;
-    display:flex;align-items:center;justify-content:center;font-size:28px;
-    font-weight:700;color:#6E44FF;background:#F1EDFF}
-  h1{font-size:22px;line-height:1.3;margin-bottom:10px}
-  p{color:#667085;font-size:15px}
-  p+p{margin-top:10px}
-  .note{margin:18px 0 0;padding:14px;border-radius:14px;background:#F1EDFF;
-    color:#101828;font-size:15px;text-align:left;display:none}
-  .actions{display:flex;gap:12px;margin-top:24px}
-  button{flex:1;height:54px;border-radius:14px;border:1px solid #D0D5DD;
-    background:#fff;color:#344054;font-size:16px;font-weight:600;
-    cursor:pointer;font-family:inherit}
-  button.primary{background:#6E44FF;border-color:#6E44FF;color:#fff}
-  button[disabled]{opacity:.6;cursor:default}
-  .status{margin-top:18px;font-size:14px;color:#667085;min-height:20px}
-  .status.error{color:#F04438}
-  .fine{margin-top:22px;font-size:13px;color:#98A2B3}
-  .map{display:none;margin:18px -22px 0;height:300px;border-top:1px solid #D0D5DD;
-    border-bottom:1px solid #D0D5DD;background:#EEF0F3}
+    Helvetica,Arial,sans-serif;color:#000;background:#fff;display:flex;
+    flex-direction:column;min-height:100vh}
+  .map{position:relative;width:100%;height:46vh;min-height:300px;background:#EEF0F3;
+    flex:none}
   .map iframe{width:100%;height:100%;border:0;display:block}
-  .stores{display:none;justify-content:center;gap:12px;margin-top:22px;flex-wrap:wrap}
-  .stores a{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;
-    border-radius:8px;background:#000;color:#fff;text-decoration:none;font-size:13px;
-    font-weight:600;line-height:1.1;text-align:left}
+  .map .empty{position:absolute;inset:0;display:flex;align-items:center;
+    justify-content:center;text-align:center;padding:24px;color:#667085;
+    font-size:15px}
+  .locate{position:absolute;right:16px;bottom:16px;width:44px;height:44px;
+    border-radius:50%;background:#fff;border:0;box-shadow:0 2px 8px rgba(0,0,0,.18);
+    display:none;align-items:center;justify-content:center;cursor:pointer}
+  .locate svg{width:22px;height:22px;fill:#000}
+  main{flex:1;display:flex;flex-direction:column;align-items:center;
+    padding:32px 20px 28px;text-align:center}
+  h1{font-size:18px;font-weight:600;line-height:1.3}
+  p{color:#667085;font-size:14px;margin-top:6px;max-width:360px}
+  .status{margin-top:10px;font-size:14px;color:#667085;min-height:20px}
+  .status.error{color:#F04438}
+  .actions{display:none;gap:12px;margin-top:18px}
+  button.pill{height:44px;padding:0 18px;border-radius:12px;border:1px solid #D0D5DD;
+    background:#fff;color:#344054;font-size:15px;font-weight:600;cursor:pointer;
+    font-family:inherit}
+  button.pill.primary{background:#4120E9;border-color:#4120E9;color:#fff}
+  button[disabled]{opacity:.6;cursor:default}
+  .stores{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:28px}
+  .stores a{display:inline-flex;align-items:center;gap:8px;height:40px;width:150px;
+    padding:0 12px;border-radius:8px;background:#000;color:#fff;text-decoration:none;
+    font-size:13px;font-weight:600;line-height:1.1;text-align:left}
   .stores a small{display:block;font-size:9px;font-weight:400;opacity:.85}
   .stores svg{width:20px;height:20px;fill:#fff;flex:none}
-  .support{display:none;margin-top:16px;font-size:13px;color:#667085}
-  .support a{color:#6E44FF;text-decoration:none}
-  @media (prefers-color-scheme:dark){
-    body{background:#15171E;color:#F9FAFB}
-    .card{background:#1E212A;border-color:rgba(255,255,255,.10)}
-    .badge{background:rgba(110,68,255,.18)}
-    .note{background:rgba(110,68,255,.16);color:#F9FAFB}
-    button{background:#1E212A;border-color:rgba(255,255,255,.16);color:#E4E7EC}
-    button.primary{background:#6E44FF;border-color:#6E44FF;color:#fff}
-  }
+  .support{margin-top:24px;font-size:13px;color:#000}
+  .support a{color:#000;text-decoration:none}
 </style>
 </head>
 <body>
-<main class="card">
-  <div class="badge" id="badge">•</div>
-  <h1 id="title">Loading this request…</h1>
+<div class="map" id="map">
+  <div class="empty" id="mapEmpty">Loading this request…</div>
+  <button class="locate" id="locate" type="button" aria-label="Show my location">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm8.94 3A8.99 8.99 0 0 0 13 3.06V1h-2v2.06A8.99 8.99 0 0 0 3.06 11H1v2h2.06A8.99 8.99 0 0 0 11 20.94V23h2v-2.06A8.99 8.99 0 0 0 20.94 13H23v-2h-2.06zM12 19a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
+  </button>
+</div>
+<main>
+  <h1 id="title">Share your location</h1>
   <p id="intro">One moment.</p>
-  <div class="note" id="note"></div>
-  <div class="actions" id="actions" style="display:none">
-    <button type="button" id="reject">Not now</button>
-    <button type="button" id="allow" class="primary">Allow</button>
-  </div>
   <p class="status" id="status" role="status" aria-live="polite"></p>
-  <!-- Figma "Track Location on web": once shared, the map with the position,
-       the store badges and the support line. -->
-  <div class="map" id="map"></div>
-  <div class="stores" id="stores">
+  <div class="actions" id="actions">
+    <button type="button" class="pill" id="reject">Not now</button>
+    <button type="button" class="pill primary" id="allow">Share my location</button>
+  </div>
+  <div class="stores">
     <a id="appstore" href="https://apps.apple.com/app/id6804151303" rel="noopener">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.4 12.6c0-2.4 2-3.5 2-3.6-1.1-1.6-2.8-1.8-3.4-1.8-1.5-.2-2.9.9-3.6.9-.8 0-1.9-.8-3.1-.8-1.6 0-3.1.9-3.9 2.4-1.7 2.9-.4 7.2 1.2 9.6.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8 1.4 0 1.9.8 3.1.8 1.3 0 2.1-1.2 2.9-2.4.9-1.3 1.3-2.6 1.3-2.7 0 0-2.6-1-2.6-4zM14.1 5.6c.6-.8 1.1-1.9 1-3-.9 0-2.1.6-2.7 1.4-.6.7-1.1 1.8-1 2.9 1 .1 2.1-.5 2.7-1.3z"/></svg>
       <span><small>Available on the</small>App Store</span>
@@ -76,16 +73,13 @@
       <span><small>GET IT ON</small>Google Play</span>
     </a>
   </div>
-  <p class="support" id="support">Support: <a href="support.html">2nd Line AI support</a></p>
-  <p class="fine">You are not signed in and no account is created. Your
-     browser asks before any position is read. 2nd Line AI never shares your
-     location unless you tap Allow.</p>
+  <p class="support">Support: <a href="support.html">2nd Line AI support</a></p>
 </main>
 <script>
 (function () {
   var API = 'https://pbnfcqcamprsrxjwlftk.supabase.co/functions/v1/location-consent/';
 
-  // The id rides either the path (…/l/<id>, served via the Pages 404 trick)
+  // The id rides either the path (…/<id>, served via the Pages 404 trick)
   // or a ?id= query.
   function requestId() {
     var q = new URLSearchParams(location.search).get('id');
@@ -98,51 +92,96 @@
   var id = requestId();
   var titleEl = document.getElementById('title');
   var introEl = document.getElementById('intro');
-  var noteEl = document.getElementById('note');
-  var badgeEl = document.getElementById('badge');
+  var status = document.getElementById('status');
   var actions = document.getElementById('actions');
   var allow = document.getElementById('allow');
   var reject = document.getElementById('reject');
-  var status = document.getElementById('status');
   var mapEl = document.getElementById('map');
-  var storesEl = document.getElementById('stores');
-  var supportEl = document.getElementById('support');
+  var mapEmpty = document.getElementById('mapEmpty');
+  var locate = document.getElementById('locate');
   var busy = false;
-
-  // The shared view: the position on a map (Google's keyless embed, with
-  // its own Map/Satellite switch), then the store badges and support.
-  function showShared(lat, lng) {
-    if (typeof lat === 'number' && typeof lng === 'number') {
-      var frame = document.createElement('iframe');
-      frame.title = 'Your shared location';
-      frame.loading = 'lazy';
-      frame.referrerPolicy = 'no-referrer-when-downgrade';
-      frame.src = 'https://maps.google.com/maps?q=' + lat + ',' + lng +
-        '&z=15&output=embed';
-      mapEl.appendChild(frame);
-      mapEl.style.display = 'block';
-    }
-    storesEl.style.display = 'flex';
-    supportEl.style.display = 'block';
-  }
+  var lastPos = null;
+  var frame = null;
 
   function say(text, isError) {
     status.textContent = text;
     status.className = isError ? 'status error' : 'status';
   }
-  function lock(on) {
-    busy = on; allow.disabled = on; reject.disabled = on;
-  }
-  function finish(title, text) {
-    actions.style.display = 'none';
-    titleEl.textContent = title;
-    introEl.textContent = text;
-    say('');
-  }
+  function lock(on) { busy = on; allow.disabled = on; reject.disabled = on; }
   function fail(title, text) {
-    titleEl.textContent = title;
-    introEl.textContent = text;
-    actions.style.display = 'none';
+    titleEl.textContent = title; introEl.textContent = text;
+    actions.style.display = 'none'; mapEmpty.textContent = title;
+  }
+
+  // Google's keyless embed: the file's map with its own Map / Satellite
+  // switch. Called with a position once one is known.
+  function showMap(lat, lng) {
+    if (!frame) {
+      frame = document.createElement('iframe');
+      frame.title = 'Your location';
+      frame.referrerPolicy = 'no-referrer-when-downgrade';
+      mapEl.insertBefore(frame, mapEmpty);
+      mapEmpty.style.display = 'none';
+    }
+    frame.src = 'https://maps.google.com/maps?q=' + lat + ',' + lng + '&z=15&output=embed';
+    locate.style.display = 'flex';
+  }
+
+  function post(payload, onOk, onFail) {
+    payload.id = id;
+    fetch(API + id, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; })
+        .then(function (data) { return { ok: res.ok, data: data }; });
+    }).then(function (r) {
+      if (r.ok) { onOk(); } else {
+        onFail((r.data && r.data.message) || 'Could not save your answer.');
+      }
+    }).catch(function () {
+      onFail('No connection. Check your signal and try again.');
+    });
+  }
+
+  // The browser's own prompt is the consent. Asked as soon as the request
+  // is known to be open; a refusal leaves the buttons to try again.
+  function askForPosition(fromTap) {
+    if (busy) { return; }
+    if (!navigator.geolocation) {
+      say('This browser cannot share a location. Try Chrome or Safari.', true);
+      actions.style.display = 'flex';
+      return;
+    }
+    lock(true);
+    say('Getting your position…');
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      lastPos = pos;
+      showMap(pos.coords.latitude, pos.coords.longitude);
+      post({
+        action: 'allow',
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+        accuracy: pos.coords.accuracy
+      }, function () {
+        lock(false);
+        titleEl.textContent = 'Location shared';
+        introEl.textContent = 'They can see where you are now. Close this page whenever you like.';
+        say('');
+        actions.style.display = 'none';
+      }, function (message) {
+        lock(false); say(message, true); actions.style.display = 'flex';
+      });
+    }, function (err) {
+      lock(false);
+      actions.style.display = 'flex';
+      say(err && err.code === 1
+        ? (fromTap
+            ? 'Location is blocked for this site. Allow it in your browser settings, then try again.'
+            : 'Tap "Share my location" and allow the browser to use your location.')
+        : 'We could not get your position. Move somewhere with a clearer signal and try again.', true);
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
   }
 
   if (!id) {
@@ -164,82 +203,37 @@
         return fail('This link has expired', 'Location links stop working after 14 days. Ask them to send a new one.');
       }
       var label = d.label || 'A 2nd Line AI user';
-      badgeEl.textContent = (label[0] || '•').toUpperCase();
       if (d.state === 'shared') {
-        // Reopened after sharing: no position is re-read, so no map.
-        finish('Location shared', 'You already shared your location with ' +
-          label + '. Close this page whenever you like.');
-        showShared();
+        titleEl.textContent = 'Location shared';
+        introEl.textContent = 'You already shared your location with ' + label + '. Close this page whenever you like.';
+        mapEmpty.textContent = 'Your location was shared with ' + label + '.';
         return;
       }
       titleEl.textContent = label + ' wants your location';
-      introEl.textContent = 'Tap Allow to send them your current position. ' +
-        'Nothing is sent until you do, and they can only see the position you share here.';
-      if (d.message) {
-        noteEl.textContent = '“' + d.message + '”';
-        noteEl.style.display = 'block';
-      }
-      actions.style.display = 'flex';
+      introEl.textContent = d.message ? '“' + d.message + '”' :
+        'Allow the browser to use your location and they will see where you are.';
+      mapEmpty.textContent = 'Your position will appear here.';
+      askForPosition(false);
     })
     .catch(function () {
       fail('Could not load', 'Check your connection and open the link again.');
     });
 
-  function post(payload, onOk, onFail) {
-    payload.id = id;
-    fetch(API + id, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    }).then(function (res) {
-      return res.json().catch(function () { return {}; })
-        .then(function (data) { return { ok: res.ok, data: data }; });
-    }).then(function (r) {
-      if (r.ok) { onOk(); } else {
-        onFail((r.data && r.data.message) || 'Could not save your answer.');
-      }
-    }).catch(function () {
-      onFail('No connection. Check your signal and try again.');
-    });
-  }
-
-  allow.addEventListener('click', function () {
-    if (busy) { return; }
-    if (!navigator.geolocation) {
-      say('This browser cannot share a location. Try Chrome or Safari.', true);
-      return;
-    }
-    lock(true);
-    say('Getting your position…');
-    navigator.geolocation.getCurrentPosition(function (pos) {
-      post({
-        action: 'allow',
-        latitude: pos.coords.latitude,
-        longitude: pos.coords.longitude,
-        accuracy: pos.coords.accuracy
-      }, function () {
-        finish('Location shared', 'They can see where you are now. Close this page whenever you like.');
-        showShared(pos.coords.latitude, pos.coords.longitude);
-      }, function (message) {
-        lock(false); say(message, true);
-      });
-    }, function (err) {
-      lock(false);
-      say(err && err.code === 1
-        ? 'Location permission was blocked. Allow location for this site in your browser settings, then try again.'
-        : 'We could not get your position. Move somewhere with a clearer signal and try again.', true);
-    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+  allow.addEventListener('click', function () { askForPosition(true); });
+  locate.addEventListener('click', function () {
+    if (lastPos) { showMap(lastPos.coords.latitude, lastPos.coords.longitude); }
   });
-
   reject.addEventListener('click', function () {
     if (busy) { return; }
     lock(true);
     say('Sending…');
     post({ action: 'reject' }, function () {
-      finish('Nothing was shared', 'We let them know you declined. No location left your device.');
-    }, function (message) {
-      lock(false); say(message, true);
-    });
+      lock(false);
+      titleEl.textContent = 'Nothing was shared';
+      introEl.textContent = 'We let them know you declined. No location left your device.';
+      actions.style.display = 'none';
+      say('');
+    }, function (message) { lock(false); say(message, true); });
   });
 })();
 </script>

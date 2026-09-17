@@ -77,6 +77,13 @@
 </main>
 <script>
 (function () {
+  // A group invitation link (<base>/group/<token>) shares this 404 page with
+  // the location links; send it to its own page before anything below runs.
+  var g = location.pathname.match(/\/group\/([0-9a-f]{32})\/?$/i);
+  if (g) {
+    location.replace(location.pathname.slice(0, g.index) + '/group.html?t=' + g[1]);
+    return;
+  }
   var API = 'https://pbnfcqcamprsrxjwlftk.supabase.co/functions/v1/location-consent/';
 
   // The id rides either the path (…/<id>, served via the Pages 404 trick)

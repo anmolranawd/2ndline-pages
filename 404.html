@@ -125,13 +125,64 @@
   function showMap(lat, lng) {
     if (!frame) {
       frame = document.createElement('iframe');
-      frame.title = 'Your location';
+      frame.title = 'Map';
       frame.referrerPolicy = 'no-referrer-when-downgrade';
       mapEl.insertBefore(frame, mapEmpty);
       mapEmpty.style.display = 'none';
     }
     frame.src = 'https://maps.google.com/maps?q=' + lat + ',' + lng + '&z=15&output=embed';
     locate.style.display = 'flex';
+  }
+
+  // ---- a LIVE share: the sender's own location, to watch (F9.1) ----------
+  // The page used to treat it as a request for YOUR location and said "Your
+  // location was shared with …". A live share now shows where they are,
+  // refreshes every 15 seconds, and says so when it ends.
+  var liveTimer = null;
+  var livePos = null;
+  function ago(iso) {
+    var s = Math.max(0, (Date.now() - Date.parse(iso)) / 1000);
+    if (s < 60) { return 'just now'; }
+    var m = Math.round(s / 60);
+    if (m < 60) { return m + ' min ago'; }
+    return Math.round(m / 60) + ' h ago';
+  }
+  function clock(iso) {
+    try {
+      return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    } catch (e) { return ''; }
+  }
+  function renderLive(d) {
+    var l = d.live || {};
+    var label = d.label || 'A 2nd Line AI user';
+    actions.style.display = 'none';
+    if (l.position) {
+      var moved = !livePos || livePos.lat !== l.position.lat || livePos.lng !== l.position.lng;
+      livePos = l.position;
+      if (moved) { showMap(l.position.lat, l.position.lng); }
+    } else {
+      mapEmpty.textContent = l.ended ? 'No position was shared.' : 'Waiting for their first position…';
+    }
+    if (l.ended) {
+      if (liveTimer) { clearInterval(liveTimer); liveTimer = null; }
+      titleEl.textContent = 'Live location ended';
+      introEl.textContent = label + ' stopped sharing' +
+        (l.ended_at ? ' at ' + clock(l.ended_at) : '') + '.' +
+        (l.position ? ' The map shows their last position.' : '');
+      say(l.position ? 'Last updated ' + ago(l.position.at) : '');
+      return;
+    }
+    titleEl.textContent = label + ' is sharing their live location';
+    introEl.textContent = d.message ? '“' + d.message + '”' :
+      'This page updates by itself while they share.';
+    say((l.position ? 'Updated ' + ago(l.position.at) : 'Waiting for their first position') +
+      (l.expires_at ? ' · Live until ' + clock(l.expires_at) : ''));
+  }
+  function pollLive() {
+    fetch(API + id + '?info=1')
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d && d.kind === 'live') { renderLive(d); } })
+      .catch(function () { /* the next tick tries again */ });
   }
 
   function post(payload, onOk, onFail) {
@@ -203,6 +254,11 @@
         return fail('Link not found', 'This location request does not exist or the link is incomplete.');
       }
       var d = r.d;
+      if (d.kind === 'live') {
+        renderLive(d);
+        if (!(d.live && d.live.ended)) { liveTimer = setInterval(pollLive, 15000); }
+        return;
+      }
       if (d.state === 'revoked') {
         return fail('This request was cancelled', 'The sender withdrew this location request. Nothing was shared.');
       }
@@ -228,6 +284,7 @@
 
   allow.addEventListener('click', function () { askForPosition(true); });
   locate.addEventListener('click', function () {
+    if (livePos) { showMap(livePos.lat, livePos.lng); return; }
     if (lastPos) { showMap(lastPos.coords.latitude, lastPos.coords.longitude); }
   });
   reject.addEventListener('click', function () {
